@@ -1,0 +1,163 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+  (Fill in comments below)
+*******************************************************************************************/
+/*
+Dealer Name:
+System Name:
+System Number:
+Programmer: Kyle Wilcoxen
+Comments:
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+  (Uncomment and declare compiler directives as needed)
+*******************************************************************************************/
+#CATEGORY "46" "Kyle's Modules" // Custom 
+#PRINT_TO_TRACE
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+/*
+#HELP_BEGIN
+   (add additional lines of help lines)
+#HELP_END
+*/
+
+#DEFINE_CONSTANT    FALSE        0
+#DEFINE_CONSTANT    TRUE         1
+#DEFINE_CONSTANT    BUFFERSIZE   65000     
+
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+  (Uncomment and declare inputs and outputs as needed)
+*******************************************************************************************/
+DIGITAL_INPUT Connect,EnableReconnect,EnableDebug;
+ANALOG_INPUT PortNumber;
+STRING_INPUT IPAddress[50],TX[BUFFERSIZE];
+
+ANALOG_OUTPUT  Connected_FB,Status_FB;
+STRING_OUTPUT  RX;
+
+
+STRING sIPAddress[50];
+INTEGER nPortNumber,nConnectState;
+/*******************************************************************************************
+  SOCKETS
+  (Uncomment and define socket definitions as needed)
+*******************************************************************************************/
+TCP_CLIENT MyClient[BUFFERSIZE];
+
+
+PUSH Connect
+{
+    SIGNED_INTEGER status;
+    nConnectState = 1;
+    status = SocketConnectClient (MyClient, sIPAddress, nPortNumber, EnableReconnect);
+
+    if (status < 0 && EnableDebug)
+        Print("Error connecting socket to address %s on port  %d",sIPAddress, nPortNumber);
+}
+
+RELEASE Connect
+{
+    SIGNED_INTEGER status;
+    nConnectState = 0;
+    status = SocketDisconnectClient (MyClient);
+
+	if (status < 0 && EnableDebug)
+    	Print("Error disconnecting socket to address %s on port  %d",sIPAddress, nPortNumber);
+
+}
+
+SOCKETCONNECT MyClient
+{
+
+    SIGNED_LONG_INTEGER nPort;
+    SIGNED_INTEGER LocalStatus;
+    STRING RemoteIPAddress[50];
+    STRING RequestedAddress[256];
+
+    Connected_FB = 1;
+
+    LocalStatus = SocketGetAddressAsRequested(MyClient, RequestedAddress);
+
+    if (LocalStatus < 0 && EnableDebug)
+		Print("Error getting remote ip address. %d\n", LocalStatus);
+    
+	IF(EnableDebug)
+    	Print("OnConnect: Connection to %s successful\n", RequestedAddress);
+
+    nPort = SocketGetPortNumber(MyClient);
+
+    if (nPort < 0 && EnableDebug)
+        Print("Error getting client port number. %ld\n", nPort);
+
+    LocalStatus = SocketGetRemoteIPAddress(MyClient, RemoteIPAddress);
+
+    if (LocalStatus < 0 && EnableDebug)
+        Print("Error getting remote ip address. %d\n", LocalStatus);
+    
+	IF(EnableDebug)
+    	Print("OnConnect: Connected to port %ld on address %s\n",nPort, RemoteIPAddress);
+}
+
+SOCKETDISCONNECT MyClient
+{
+
+    Connected_FB = 0;
+    
+	IF(EnableDebug)
+    {
+		if (nConnectState)
+        	Print("Socket disconnected remotely");
+   		Else
+        	Print("Local disconnect complete.");
+    }
+}
+
+SOCKETSTATUS MyClient
+{
+    SIGNED_INTEGER Status;
+
+    Status = SocketGetStatus();
+    Status_FB = Status;
+    
+    IF(EnableDebug)
+    {
+        Print("The SocketGetStatus returns:       %d\n", Status);
+        Print("The MyClient.SocketStatus returns: %d\n", MyClient.SocketStatus);
+    }
+}
+
+SOCKETRECEIVE MyClient
+{
+    if (Len(MyClient.SocketRxBuf) > 0)
+    {
+        IF(EnableDebug)
+           Print("Rx: %s", MyClient.SocketRxBuf);
+        
+        //Send to serial output and clear buffer
+        RX = MyClient.SocketRxBuf;
+        ClearBuffer(MyClient.SocketRxBuf); 
+    }
+}
+
+CHANGE TX
+{
+    signed_integer iStatus;
+
+    iStatus = SocketSend(MyClient, TX );
+    
+	IF(EnableDebug)
+	{
+    	if (iStatus < 0)
+        	Print("Error Sending to MyClient: %d\n", iStatus);
+ 		ELSE
+			Print("Tx: %s", TX);
+	}
+}
+
+CHANGE IPAddress {sIPAddress = IPAddress;}
+CHANGE PortNumber {nPortNumber = PortNumber;}
