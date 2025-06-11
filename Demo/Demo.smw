@@ -1585,10 +1585,10 @@ Rx=916
 Ry=970
 Xm=-1
 Ym=-1
-SH=21
+SH=22
 Z=125
 Ht=1
-Hi=10
+Hi=8
 ]
 [
 ObjTp=Sm
@@ -1656,7 +1656,7 @@ ObjVer=1
 SmVr=1221
 CF=2
 mC=1
-C1=21
+C1=22
 ]
 [
 ObjTp=Sm
@@ -1931,9 +1931,9 @@ tO=17
 ]
 [
 ObjTp=Sm
-H=21
+H=22
 SmC=155
-Nm=TCP Client BETA.umc
+Nm=TCP Client v1.0.umc
 ObjVer=1
 PrH=4
 CF=2
@@ -1943,8 +1943,6 @@ mI=10
 I1=9
 I2=2
 I5=7
-I7=11
-I8=12
 I10=10
 mO=5
 tO=5
@@ -1953,7 +1951,7 @@ O2=5
 O3=6
 O5=8
 mP=2
-P1=192.168.1.100
+P1=192.168.1.210
 P2=23d
 ]
 [
@@ -1994,16 +1992,4 @@ Nm=//Connect
 ObjTp=Sg
 H=10
 Nm=//Debug
-]
-[
-ObjTp=Sg
-H=11
-Nm=//IP_Address$
-SgTp=4
-]
-[
-ObjTp=Sg
-H=12
-Nm=//Port
-SgTp=2
 ]
