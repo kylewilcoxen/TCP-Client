@@ -1642,7 +1642,7 @@ ObjVer=1
 SmVr=1221
 CF=1
 mC=1
-C1=21
+C1=22
 ]
 [
 ObjTp=Sm
@@ -1917,9 +1917,9 @@ tO=17
 ]
 [
 ObjTp=Sm
-H=21
+H=22
 SmC=103
-Nm=TCP-IP Direct Socket Connection v3.1.usp
+Nm=TCP Client v1.0.usp
 ObjVer=1
 PrH=4
 CF=1
@@ -1928,6 +1928,13 @@ n2I=3
 mI=6
 mO=3
 tO=3
+O1=4
 mP=1
 P1=
+]
+[
+ObjTp=Sg
+H=4
+Nm=Connected_FB
+SgTp=2
 ]

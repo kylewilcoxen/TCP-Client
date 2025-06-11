@@ -14,7 +14,7 @@ Comments:
   Compiler Directives
   (Uncomment and declare compiler directives as needed)
 *******************************************************************************************/
-#CATEGORY "46" "Kyle's Modules" // Custom 
+#CATEGORY "46" "KJW" // Custom 
 #PRINT_TO_TRACE
 #DEFAULT_VOLATILE
 #ENABLE_STACK_CHECKING
