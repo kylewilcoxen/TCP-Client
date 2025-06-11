@@ -1,0 +1,35 @@
+Programmer: Kyle Wilcoxen
+
+SUMMARY:
+This module was created function like Crestron's Interlock-Toggle and Multiple One Shot combined into one module.
+
+MODULE OPERATION:
+--------------------------------------------------------
+Standard Interlock (Default)
+--------------------------------------------------------
+Connect an analog initialize to the Input signal. This is used for your interlock inputs.
+Connect an analog equate to the Output signal. This is used for your interlock digital feedback.
+
+You can use any value for initialize and equate, but keep in mind the parameter values for the equate must match the parameters in the initialize for this module to work properly.
+
+--------------------------------------------------------
+Interlock Toggle
+--------------------------------------------------------
+To make this module an interlock toggle, set the Interlock_Type parameter to Toggle in the dropdown.
+Use the [InterlockType] analog input to set the type for the module programmatically.
+
+The parameter, Toggle_Disable_Time, disables the toggle feature for the time specified. This prevents the module from getting into a toggle loop. Default is .3s and shouldn't need to be changed unless the module gets into some kind of loop.
+
+--------------------------------------------------------
+Multiple One Shot
+--------------------------------------------------------
+To create a MOS from this module, use a second analog equate and connect its analog/digital inputs to the Output and [OS] signal of the module.
+
+When any value is sent to Input, the module will pulse the [OS] digital output for the duration set by the Pulse Time parameter. This output will be pulsed even if Input receives the same value.
+
+Use the Pulse_Delay parameter to set a delay to the [OS] output. Parameter is set to 0s by default.
+
+--------------------------------------------------------
+Setting Output Feedback Only
+--------------------------------------------------------
+If a scenario arises where you need to set the feedback on the module but do NOT want [OS] pulsed, simply set Output to a value with a separate analog initialize symbol.
