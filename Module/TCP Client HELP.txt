@@ -1,0 +1,42 @@
+Programmer: Kyle Wilcoxen
+
+SUMMARY:
+This module is a TCP client. By default, module will attempt reconnection if failed.
+
+IP ADDRESS AND PORT (MUST SET BEFORE CONNECTING)
+--------------------------------------------------------
+Set the IP address and port in the parameter of the module or 
+set them from your program with [IP_Address$] and [Port] inputs.
+
+CONNECTING TO A DEVICE
+--------------------------------------------------------
+After setting IP Address and Port, hold Connect high.
+By default the module will reconnect if failed. Set Enable_Reconnect to 
+zero or comment out to disable reconnection. Set Connect input to low to
+disconnect from the device.
+
+When connection is successful you should see communication from the device using RX$.
+Use the TX$ signal to send commands to the device.
+
+CONNECTION FEEDBACK
+--------------------------------------------------------
+When a valid connection is established to the device, the IsConnected_FB digital signal will go high.
+The [Connected_FB] analog signal will then change to 1d. When module is disconnected the analog signal
+will change to 0d.
+
+The [Status_FB] values are:
+ 0d = Not Connected
+ 1d = Waiting for connection
+ 2d = Connected
+ 3d = Connection failed
+ 4d = Connection broken remotely
+ 5d = Connection broken locally
+ 6d = Performing DNS lookup
+ 7d = DNS lookup failed
+ 8d = DNS lookup resolved
+ 9d = Loss of link
+
+DEBUGGING
+--------------------------------------------------------
+Set the [Debug] signal high to receive debug messages printed to console.
+

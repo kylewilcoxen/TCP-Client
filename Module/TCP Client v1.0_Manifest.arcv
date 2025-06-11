@@ -1,0 +1,23 @@
+[BEGIN]
+  ObjTp=FSgntr
+  Sgntr=ArchiveManifest
+  RelVrs=4.3000.01
+  IsProgram=0
+  TopLevelProgram=TCP Client v1.0.umc
+[END]
+[BEGIN]
+  ObjTp=ArchiveItem
+  File=TCP Client v1.0.umc
+  Scope=1
+[END]
+[BEGIN]
+  ObjTp=ArchiveItem
+  File=TCP Client HELP.txt
+  Scope=1
+  Module=TCP Client v1.0.umc
+[END]
+[BEGIN]
+  ObjTp=ArchiveItem
+  File=TCP Client v1.0.ush
+  Scope=1
+[END]
