@@ -1,0 +1,241 @@
+/*******************************************************************************************
+  SIMPL+ Module Information
+  (Fill in comments below)
+*******************************************************************************************/
+/*
+Dealer Name:
+System Name:
+System Number:
+Programmer: Kyle Wilcoxen
+Comments:
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+  (Uncomment and declare compiler directives as needed)
+*******************************************************************************************/
+#CATEGORY "46" "KJW" // Custom 
+#PRINT_TO_TRACE
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+#PRINT_TO_TRACE
+/*
+#HELP_BEGIN
+   (add additional lines of help lines)
+#HELP_END
+*/
+
+#DEFINE_CONSTANT    FALSE        0
+#DEFINE_CONSTANT    TRUE         1
+#DEFINE_CONSTANT    BUFFERSIZE   50000 
+
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+  (Uncomment and declare inputs and outputs as needed)
+*******************************************************************************************/
+DIGITAL_INPUT Connect,EnableReconnect,EnableDebug;
+ANALOG_INPUT PortNumber;
+STRING_INPUT IPAddress[50],To_Device$[BUFFERSIZE];
+
+ANALOG_OUTPUT  Connected_FB,Status_FB;
+STRING_OUTPUT  From_Device$,StatusMsg$; 
+
+/*******************************************************************************************
+  SOCKETS
+  (Uncomment and define socket definitions as needed)
+*******************************************************************************************/
+TCP_CLIENT client[BUFFERSIZE];
+
+STRING sIPAddress[50];
+INTEGER nPortNumber,nConnectState,nDebug,nStatus,nReconnect;
+
+
+/*******************************************************************************************
+  Functions
+  (Add any additional functions here)
+  Note:  Functions must be physically placed before the location in
+         the code that calls them.
+*******************************************************************************************/
+STRING_FUNCTION fnDebugger(STRING sCommand)
+{
+	STRING sHeader[50];
+	sHeader = "TCP-IP DirectSocket:";
+	
+	IF(nDebug)
+	{
+		IF(sCommand = "ALREADY CONNECTED")
+			PRINT("%sERROR: Socket at %s : %u is already connected.\r",
+				sHeader, sIPAddress, nPortNumber);
+		
+		IF(sCommand = "ALREADY DISCONNECTED")
+			PRINT("%sERROR: Socket at %s : %u is already disconnected.\r",
+				sHeader, sIPAddress, nPortNumber);
+		
+		IF(sCommand = "CONNECT ERROR")
+			PRINT("%sERROR: Error connecting to socket at %s : %d. Socket status = %u.\r",
+				sHeader, sIPAddress, nPortNumber, client.SocketStatus);
+				
+		IF(sCommand = "CONNECTING")
+			PRINT("%sINFO:  Connecting socket to %s : %d\r",sHeader,sIPAddress,nPortNumber);
+		
+		IF(sCommand = "DISCONNECTING")
+			PRINT("%sINFO:  Disconnecting socket from %s : %d\r",sHeader,sIPAddress,nPortNumber);
+		
+		IF(FIND("SOCKETSTATUS",sCommand))
+			PRINT("%s%s",sHeader, sCommand);
+		
+		IF(sCommand = "CANNOT DISCONNECT")
+			PRINT("%sERROR:  Can not disconnect socket from %s : %u. Socket status = %d\r",sHeader,sIPAddress,nPortNumber,client.SocketStatus);
+		
+		IF(sCommand = "RECONNECT")
+			PRINT("%sINFO:  Reconnect set to %u\r",sHeader,nReconnect);
+	}
+}       
+
+INTEGER_FUNCTION fnSetConnectionStateFB(INTEGER nState)
+{	   
+	IF(nState)
+	{
+		nConnectState = 1;
+		Connected_FB = nConnectState;		
+	}
+	ELSE
+	{
+		nConnectState = 0;
+		Connected_FB = nConnectState;		
+	}
+}
+
+Function fnConnectSocket()
+{
+	SIGNED_INTEGER nStatus;
+	
+	IF(nConnectState)
+		fnDebugger("ALREADY CONNECTED");
+	ELSE
+	{
+		
+		nStatus = SocketConnectClient (client,sIPAddress,nPortNumber,nReconnect);
+		PRINT("SocketConnectClient: nReconnect = %u",nReconnect);
+		
+		IF(nStatus < 0)
+			fnDebugger("CONNECT ERROR");
+		ELSE
+			fnDebugger("CONNECTING");
+	}		
+}
+
+Function fnDisconnectSocket()
+{
+	SIGNED_INTEGER nStatus;
+	
+	nStatus = SocketDisconnectClient(client);
+	
+	IF(nStatus <0)
+			fnDebugger("CANNOT DISCONNECT");
+	ELSE
+		fnDebugger("DISCONNECTING");		
+}
+
+
+/*******************************************************************************************
+  Event Handlers
+  (Uncomment and declare additional event handlers as needed)
+*******************************************************************************************/
+PUSH Connect 
+{
+	//PRINT("Connect Pushed");
+	fnConnectSocket();
+}
+
+RELEASE Connect
+{
+	//PRINT("Connect Released");
+	fnDisconnectSocket();
+}
+
+PUSH EnableReconnect
+{
+	nReconnect = 1;
+	fnDebugger("RECONNECT");
+}
+RELEASE EnableReconnect
+{
+	nReconnect = 0;
+	fnDebugger("RECONNECT");
+}
+
+PUSH EnableDebug
+{
+	nDebug = 1;
+}
+RELEASE EnableDebug
+{
+	nDebug = 0;
+}
+
+CHANGE PortNumber {nPortNumber = PortNumber;}
+CHANGE IPAddress {sIPAddress = IPAddress;}
+
+CHANGE To_Device$
+{
+	SIGNED_INTEGER nStatus;
+	nStatus = SocketSend(client,To_Device$);
+	
+	IF(nStatus < 0 && nDebug)
+		PRINT("TCP-IP DirectSocket:ERROR:  Can not send to socket %s : %u. Status = %d\r",sIPAddress,nPortNumber,nStatus);
+}
+
+SOCKETCONNECT client{fnSetConnectionStateFB(1);}
+SOCKETDISCONNECT client{fnSetConnectionStateFB(0);}
+SOCKETSTATUS client
+{
+	SIGNED_INTEGER nStatus;
+	STRING sMsg[500];
+	STRING sStatus[100];
+	nStatus = SocketGetStatus();
+	Status_FB = nStatus;
+	
+	SWITCH(nStatus)
+	{
+		CASE (0):{sStatus = "Not Connected";}
+		CASE (1):{sStatus = "Waiting for connection";}
+		CASE (2):{sStatus = "Connected";}
+		CASE (3):{sStatus = "Connection failed";}
+		CASE (4):{sStatus = "Connection broken remotely";}
+		CASE (5):{sStatus = "Connection broken locally";}
+		CASE (6):{sStatus = "Performing DNS lookup";}
+		CASE (7):{sStatus = "DNS lookup failed";}
+		CASE (8):{sStatus = "DNS lookup resolved";}
+		CASE (9):{sStatus = "Loss of link";}
+	}
+	
+	MAKESTRING(sMsg, "SOCKETSTATUS: %s",sStatus);
+	fnDebugger(sMsg);
+	MAKESTRING(StatusMsg$, "%s",sStatus);
+}
+SOCKETRECEIVE client
+{
+	IF(nDebug)
+		PRINT("TCP-IP DirectSocket:RX: %s\r",client.SocketRxBuf);
+	From_Device$ = client.SocketRxBuf;
+	ClearBuffer(client.SocketRxBuf);
+}
+/*******************************************************************************************
+  Main()
+  Uncomment and place one-time startup code here
+  (This code will get called when the system starts up)
+*******************************************************************************************/
+Function Main()
+{
+	sIPAddress = "";
+    nPortNumber = 0;
+    nConnectState = 0;
+    nDebug = 0;
+    nStatus = 0;
+    nReconnect = 0;
+    
+    WaitForInitializationComplete();
+}
+
